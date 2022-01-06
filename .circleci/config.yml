@@ -1,0 +1,48 @@
+version: 2.1
+
+executors:
+  golang:
+    docker:
+      - image: cimg/go:1.16
+
+commands:
+  install_terraform:
+    description: install terraform in go container
+    steps:
+      - run:
+          name: Create Terraform Credentials file
+          command: echo "credentials \"app.terraform.io\" { token = \"$TF_CLOUD_TOKEN\" }" >$HOME/.terraformrc
+      - run:
+          name: Install Terraform
+          environment:
+            TF_VERSION: 1.1.2
+          command: |
+            mkdir -p ~/bin
+            cd ~/bin
+            wget https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip
+            unzip terraform_${TF_VERSION}_linux_amd64.zip
+            echo 'export PATH=~/bin:$PATH'  >> $BASH_ENV
+            terraform --version
+  run_plan:
+    description: run terraform init and plan
+    steps:
+      - run:
+          name: run terraform init and plan
+          command: |
+            terraform --version
+            cd examples/complete
+            terraform init -input=false
+
+jobs:
+  run-terraform-plan:
+    executor: golang
+    steps:
+      - checkout
+      - install_terraform
+      - run_plan
+
+workflows:
+  version: 2
+  on-commit:
+    jobs:
+      - run-terraform-plan
