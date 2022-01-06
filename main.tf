@@ -1,6 +1,6 @@
 data "external" "dns_validation" {
   count   = var.enabled ? 1 : 0
-  program = ["bash", "./scripts/ns1.sh"]
+  program = ["bash", "${path.module}/scripts/ns1.sh"]
   query = {
     api_key      = var.ns1_api_key
     cname_record = var.cname_record
